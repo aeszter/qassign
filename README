@@ -1,0 +1,93 @@
+qassign
+=====
+
+A replacement scheduler for Grid Engine
+
+By Ansgar Esztermann <aeszter@mpibpc.mpg.de>
+
+1. Goal
+Although it is very versatile, SGE's scheduler has some disadvantages.
+Main points:
+
+-Can be slow sometimes, especially with flexible jobs (i.e. jobs that
+ can run almost everywhere in a heterogeneous cluster) and reservations;
+-Not always flexible enough. The balancer (https://github.com/aeszter/balancer)
+ is a good workaround, though;
+-No lightsout support. We have a working external solution
+ (https://github.com/aeszter/lightsout) that is good at turning nodes off, 
+ but not always good at turning them on again (the number of nodes turned on per
+ time is inherently limited).
+ Furthermore, an internal lightsout would get by with much less
+ configuration;
+-Sometimes, bugs are encountered. These tend to be hard to find due to
+ the complexity of the source code;
+
+SGE 5.3 used to have an interface for external schedulers. The scheduler was 
+a separate task then, but nowadays it is a thread within qmaster, so
+replacing it is not easily possible. On the Gridengine users list,
+Reuti proposed an alternative: set all jobs on hold so they are not
+touched by SGE's own scheduler any more. An external scheduler can
+then use qalter -q something@node123 and release the hold in order to
+place the job.
+
+2. Objectives
+2.1. Basics
+-must be a drop-in in some form, ideally a plug-in to SGE that can be
+ replaced by the original scheduler if necessary (e.g. severe bugs);
+-scheduling according to runtime and other resources (memory, GPUs, ...);
+-reservations for parallel jobs;
+-backfill.
+
+2.2. Runtime optimisation
+-scheduling time limit per job. E.g. after one minute, the best
+ placement for a given job is taken;
+-keep reservations across scheduler runs so:
+--exhaustive searches are necessary only every n runs,
+--a few randomly selected placements are checked every run, but the
+  overall placement remains of high quality;
+ -max_reservation is automatically adapted to scheduler load/runtime.
+ -R may even be something more fine-grained than a simple yes/no, e.g.
+ by spending more time on top jobs, but still doing a quick check for
+ lower-priority jobs; at the very least, keep old reservations as long
+ as the job is not "overtaken".
+
+2.3. Reliable start time promises
+-for the top n jobs (overall or per user), calculate a binding start
+ time (and report it to the user). Later jobs will have to wait even if
+ they end up with a high priority.
+
+2.4. Balancer
+-instead of queueing for CPU or GPU only, look at both job
+ "personalities", and run (or reserve) whatever is possible. The
+ external balancer will remain functional, so this can wait.
+
+2.5. Lightsout
+-turn on needed nodes right away;
+-turn off nodes that are not needed for n hours (in both directions:
+--a node that has been busy until 5 minutes ago should probably be
+  kept on in case a user has killed a bunch of jobs and is just about to
+  re-submit them,
+--and do not turn off nodes that have a pending reservation in half an
+  hour);
+-for this to work, nodes must be assigned in an unchanging sequence so
+ they age properly. 
+Again, the external solution works satisfactorily, and the limited
+steepness when turning nodes on can be augmented manually (during
+working hours), so this can wait as well.
+
+3. Requirements
+The following libraries are needed:
+
+  * Florist (POSIX API)
+  * SGElib (Grid Engine frontend, also on github by the author of
+    qview)
+  
+  The latter needs:
+  * ADAcgi
+  * XMLAda
+
+Of course, a working Grid Engine installation is also necessary.
+
+3. Configuration
+To be done
+
