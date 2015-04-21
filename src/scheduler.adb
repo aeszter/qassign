@@ -32,7 +32,7 @@ package body Scheduler is
       --  loop
       Start (Scheduler_Time);
       Start (Read_Time);
-      SGE_Out := SGE.Parser.Setup (Selector => Implicit_Trust ("-u * -s p"), Command => Cmd_Qstat);
+      SGE_Out := SGE.Parser.Setup (Selector => Implicit_Trust ("-u * -s hs"), Command => Cmd_Qstat);
 
       Jobs.Append_List (SGE.Parser.Get_Job_Nodes_From_Qstat_U (SGE_Out));
       SGE.Parser.Free;
@@ -48,14 +48,18 @@ package body Scheduler is
    procedure Schedule_One_Job (J : Jobs.Job) is
       Time : Timer;
    begin
+      if J.Has_Error or else
+        J.Is_Running
+      then
+         Logging.Debug (J.Get_ID & " ineligible");
+         return;
+      end if;
+
       Start (Time);
       declare
          Destination : constant String := Queues.Find_Match_Now (J, True);
       begin
          Actions.Assign (J, Destination);
-      exception
-         when Not_Possible =>
-            Logging.Debug (Get_ID (J) & ": cannot run");
       end;
       Stop (Time);
       if Result (Time) < 1.0 then
@@ -65,6 +69,9 @@ package body Scheduler is
       else
          Logging.Warning (Get_ID (J) & " took " & Result (Time));
       end if;
+      exception
+         when Not_Possible =>
+            Logging.Debug (Get_ID (J) & ": cannot run");
    end Schedule_One_Job;
 
 end Scheduler;

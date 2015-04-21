@@ -11,6 +11,7 @@ package body Queues is
    function Find_Match_Now (J : Jobs.Job; Mark_As_Used : Boolean) return String is
       Props : Set_Of_Properties;
       Slots_To_Occupy : Natural;
+      Q  : Queue;
       procedure Update_Slot_Count (Q : in out Queue);
 
       procedure Update_Slot_Count (Q : in out Queue) is
@@ -20,17 +21,19 @@ package body Queues is
 
    begin
       Rewind;
+      Q := Current;
       while not At_End loop
-         Props := Get_Properties (Current);
+         Props := Get_Properties (Q);
          if J.Can_Run (Props) and then
-           Get_Free_Slots (Current) >= J.Get_Minimum_Slots
+           Get_Free_Slots (Q) >= J.Get_Minimum_Slots
          then
             if Mark_As_Used then
-               Slots_To_Occupy := Integer'Min (J.Get_Maximum_Slots, Get_Free_Slots (Current));
+               Slots_To_Occupy := Integer'Min (J.Get_Maximum_Slots, Get_Free_Slots (Q));
                Update_Current (Update_Slot_Count'Access);
             end if;
-            return Get_Name (Current);
+            return Get_Name (Q);
          end if;
+         Q := Next;
       end loop;
       raise Scheduler.Not_Possible;
    end Find_Match_Now;

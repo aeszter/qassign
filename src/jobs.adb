@@ -1,3 +1,4 @@
+with SGE.Utils;
 package body Jobs is
 
    procedure Append_List (Nodes : SGE.Parser.Node_List) is
@@ -13,10 +14,16 @@ package body Jobs is
    end Append_List;
 
    function Can_Run (J : Job; Props : SGE.Host_Properties.Set_Of_Properties) return Boolean is
-      pragma Unreferenced (J, Props);
+      use SGE.Utils; -- user names
    begin
+      if J.Get_Owner /= "aeszter" then
+         return False;
+         pragma Compile_Time_Warning (True, "Mock-up limited to aeszter's jobs");
+      end if;
+      if J.Get_Minimum_Slots <= SGE.Host_Properties.Get_Cores (Props) then
+         return True;
+      end if;
       return False;
-      pragma Compile_Time_Warning (True, "Unimplemented");
    end Can_Run;
 
    procedure Iterate (Process : not null access procedure (J : Job)) is
