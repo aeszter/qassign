@@ -31,7 +31,7 @@ package body Queues is
                Slots_To_Occupy := Integer'Min (J.Get_Maximum_Slots, Get_Free_Slots (Q));
                Update_Current (Update_Slot_Count'Access);
             end if;
-            return Get_Name (Q);
+            return Get_Name (Q) & "@" & To_String (Get_Host_Name (Q));
          end if;
          Q := Next;
       end loop;

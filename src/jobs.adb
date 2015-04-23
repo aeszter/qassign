@@ -16,7 +16,7 @@ package body Jobs is
    function Can_Run (J : Job; Props : SGE.Host_Properties.Set_Of_Properties) return Boolean is
       use SGE.Utils; -- user names
    begin
-      if J.Get_Owner /= "aeszter" then
+      if J.Get_Owner /= "aeszter " then
          return False;
          pragma Compile_Time_Warning (True, "Mock-up limited to aeszter's jobs");
       end if;
