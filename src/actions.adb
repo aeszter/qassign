@@ -14,7 +14,8 @@ package body Actions is
          SGE.Parser.Setup_No_XML (Command => Trust_As_Command ("qalter"),
                                   Subpath => Implicit_Trust ("/bin/linux-x64/"),
                                   Selector => Sanitise_Job_List (J.Get_ID)
-                                  & Implicit_Trust (" -q ") & Sanitise (Destination),
+                                  & Implicit_Trust (" -q ") & Sanitise (Destination)
+                                  & Implicit_Trust (" -h S"),
                                   Output      => Output,
                                   Exit_Status => Exit_Status);
          Output.Rewind;
